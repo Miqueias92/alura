@@ -3,7 +3,11 @@ package br.com.alura.leilao.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,18 +33,29 @@ class GeradorDePagamentoTest {
 	@Mock
 	private PagamentoDao pagamentoDao;
 	
+	@Mock
+	private Clock clock;
+	
 	@Captor
 	private ArgumentCaptor<Pagamento> captor; 
 	
 	@BeforeEach
 	public void beforeEach() {
 		MockitoAnnotations.initMocks(this);
-		this.gerador = new GeradorDePagamento(pagamentoDao);
+		this.gerador = new GeradorDePagamento(pagamentoDao, clock);
 	}
 	@Test
 	void deveriaCriarPagamentoParaVencedorDoLeilao() {
 		Leilao leilao = leilao();
 		Lance vencedor = leilao.getLanceVencedor();
+	
+		LocalDate data = LocalDate.of(2021, 05, 6);
+		
+		Instant instant = data.atStartOfDay(ZoneId.systemDefault()).toInstant();
+		
+		Mockito.when(clock.instant()).thenReturn(instant);
+		Mockito.when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+		
 		gerador.gerarPagamento(vencedor);
 		
 		Mockito.verify(pagamentoDao).salvar(captor.capture());
